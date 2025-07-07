@@ -1,0 +1,13 @@
+# Ignore node_modules everywhere
+**/node_modules
+
+# Ignore .env file for security
+**/.env
+
+# Ignore lock files outside the backend
+/package-lock.json
+/client/package-lock.json
+
+# Ignore system files
+.DS_Store
+Thumbs.db
