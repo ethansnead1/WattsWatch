@@ -12,7 +12,7 @@ let peakPowers = {};
 
 const updateDashboard = async () => {
   try {
-    const response = await fetch("http://localhost:5000/api/readings/latest", {
+    const response = await fetch("/api/readings/latest", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -79,7 +79,7 @@ async function downloadPDF() {
   const token = localStorage.getItem("token");
 
   try {
-    const response = await fetch("http://localhost:5000/api/download", {
+    const response = await fetch("/api/download", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

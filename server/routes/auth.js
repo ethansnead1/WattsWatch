@@ -73,7 +73,7 @@ router.post('/request-reset', async (req, res) => {
     user.resetTokenExpires = Date.now() + 1000 * 60 * 15; // 15 minutes
     await user.save();
 
-    const resetLink = `http://localhost:5000/reset-password.html?token=${token}`;
+    const resetLink = `/reset-password.html?token=${token}`;
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',

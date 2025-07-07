@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "postinstall": "npm rebuild canvas"
   },
   "keywords": [],
   "author": "Ethan",
