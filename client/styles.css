@@ -1,0 +1,189 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #0f0f1a;
+  color: #f2f2f2;
+  text-align: center;
+}
+
+.auth-container, .dashboard-container {
+  background: #1a1a2e;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 0 20px #272838, 0 0 10px #ffffff80;
+  width: 100%;
+  max-width: 800px;
+  margin: 4rem auto;
+}
+
+.logo {
+  width: 100px;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 0 10px #000000);
+}
+
+.logo.small {
+  width: 60px;
+}
+
+input[type="text"], input[type="password"], input[type="email"] {
+  width: 90%;
+  padding: 0.7rem;
+  margin: 0.5rem 0;
+  border: 2px solid #AFCBD5;
+  background-color: #12122b;
+  color: #f2f2f2;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+input:focus {
+  outline: none;
+  border-color: #00f0ff;
+  box-shadow: 0 0 5px #00f0ff;
+}
+
+button {
+  background: linear-gradient(45deg, #000000, #000000);
+  color: white;
+  border: white 2px solid;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: transform 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+canvas {
+  margin-top: 1.5rem;
+  max-width: 100%;
+  background: #0f0f1a;
+  border: 1px solid #00f0ff50;
+  border-radius: 10px;
+}
+
+.gauges {
+  display: flex;
+  justify-content: space-around;
+  margin: 2rem 0;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.voltageCircle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #ffee0044, #12122b);
+  border: 3px solid #F2B418;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #80FF44;
+  box-shadow: 0 0 50px #fffb0080;
+  margin-bottom: 0.5rem;
+}
+
+.currentCircle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #00f0ff44, #12122b);
+  border: 3px solid #18c6f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #80FF44;
+  box-shadow: 0 0 50px #00f0ff80;
+  margin-bottom: 0.5rem;
+}
+
+.powerCircle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #770c0444, #12122b);
+  border: 3px solid #cc2b0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #80FF44;
+  box-shadow: 0 0 50px #ff000080;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+}
+
+.dashboard-header button {
+  margin: 0;
+}
+
+/* === ROW HEADERS === */
+.gauges-row {
+  margin: 2rem 0;
+}
+
+.gauges-row h2 {
+  margin-bottom: 0.5rem;
+  color: #3DA9FC;
+  font-size: 1.5rem;
+}
+
+/* === MULTI-PHASE LAYOUT === */
+.gauges {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+/* === LINE-TO-LINE VOLTAGE SECTION === */
+.line-voltage-row {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+/* === Toggle Button === */
+#phaseToggleBtn {
+  margin: 1rem 0;
+  padding: 0.6rem 1.5rem;
+  background: linear-gradient(45deg, #3DA9FC, #0070F3);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+#phaseToggleBtn:hover {
+  transform: scale(1.05);
+}

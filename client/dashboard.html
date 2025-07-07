@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WattsWatch Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="dashboard-container">
+    <img src="assets/logo.png" class="logo small" alt="WattsWatch Logo" />
+    <h1>Dashboard</h1>
+
+    <!-- Phase Toggle Button -->
+    <button id="phaseToggleBtn">Switch to 3-Phase</button>
+
+    <!-- Phase Rows -->
+    <div id="phase1Row" class="gauges-row">
+      <h2>Phase 1</h2>
+      <div class="gauges">
+        <div class="gauge">
+          <div class="voltageCircle" id="voltageP1">0 V</div>
+          <p>Voltage</p>
+        </div>
+        <div class="gauge">
+          <div class="currentCircle" id="currentP1">0 A</div>
+          <p>Current</p>
+        </div>
+        <div class="gauge">
+          <div class="powerCircle" id="powerP1">0 W</div>
+          <p>Power</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="phase2Row" class="gauges-row">
+      <h2>Phase 2</h2>
+      <div class="gauges">
+        <div class="gauge">
+          <div class="voltageCircle" id="voltageP2">0 V</div>
+          <p>Voltage</p>
+        </div>
+        <div class="gauge">
+          <div class="currentCircle" id="currentP2">0 A</div>
+          <p>Current</p>
+        </div>
+        <div class="gauge">
+          <div class="powerCircle" id="powerP2">0 W</div>
+          <p>Power</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Only shown in 3-Phase mode -->
+    <div id="phase3Row" class="gauges-row" style="display: none;">
+      <h2>Phase 3</h2>
+      <div class="gauges">
+        <div class="gauge">
+          <div class="voltageCircle" id="voltageP3">0 V</div>
+          <p>Voltage</p>
+        </div>
+        <div class="gauge">
+          <div class="currentCircle" id="currentP3">0 A</div>
+          <p>Current</p>
+        </div>
+        <div class="gauge">
+          <div class="powerCircle" id="powerP3">0 W</div>
+          <p>Power</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line-to-Line Voltages -->
+    <div class="line-voltage-row">
+      <div class="gauge">
+        <div class="voltageCircle" id="voltageL1L2">0 V</div>
+        <p>Line 1–2 Voltage</p>
+      </div>
+      <div class="gauge" id="voltageL1L3Wrapper" style="display: none;">
+        <div class="voltageCircle" id="voltageL1L3">0 V</div>
+        <p>Line 1–3 Voltage</p>
+      </div>
+      <div class="gauge" id="voltageL2L3Wrapper" style="display: none;">
+        <div class="voltageCircle" id="voltageL2L3">0 V</div>
+        <p>Line 2–3 Voltage</p>
+      </div>
+</div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <button id="logoutBtn">Logout</button>
+    <button onclick="downloadPDF()">Download PDF</button>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
