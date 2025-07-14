@@ -1,3 +1,5 @@
+const API_URL = "https://wattswatch.onrender.com/api";
+
 // SIGNUP HANDLER
 document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
