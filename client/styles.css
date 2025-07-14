@@ -20,7 +20,7 @@ body {
 .logo {
   width: 100px;
   margin-bottom: 1rem;
-  filter: drop-shadow(0 0 10px #000000);
+  filter: drop-shadow(0 0 10px #ffffff);
 }
 
 .logo.small {
