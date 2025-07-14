@@ -193,12 +193,10 @@ router.get('/download', authenticate, async (req, res) => {
     doc.addPage();
     doc.fontSize(16).text('Voltage L1–L2', { align: 'center' });
     doc.image(l1l2Chart, { width: 500 });
-    doc.moveDown();
-
-    doc.addPage();
     doc.fontSize(16).text('Voltage L1–L3', { align: 'center' });
     doc.image(l1l3Chart, { width: 500 });
     doc.moveDown();
+  
 
     doc.addPage();
     doc.fontSize(16).text('Voltage L2–L3', { align: 'center' });
