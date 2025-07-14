@@ -73,7 +73,7 @@ router.get('/readings/latest', authenticate, async (req, res) => {
   }
 });
 
-// Route: Download PDF report
+// PDF Download
 router.get('/download', authenticate, async (req, res) => {
   try {
     const end = new Date();
@@ -95,9 +95,7 @@ router.get('/download', authenticate, async (req, res) => {
       voltage: { P1: 0, P2: 0, P3: 0 },
       current: { P1: 0, P2: 0, P3: 0 },
       power: { P1: 0, P2: 0, P3: 0 },
-      L1L2: 0,
-      L1L3: 0,
-      L2L3: 0
+      L1L2: 0, L1L3: 0, L2L3: 0
     };
 
     for (const r of readings) {
@@ -107,9 +105,7 @@ router.get('/download', authenticate, async (req, res) => {
           voltage: { P1: 0, P2: 0, P3: 0 },
           current: { P1: 0, P2: 0, P3: 0 },
           power: { P1: 0, P2: 0, P3: 0 },
-          L1L2: 0,
-          L1L3: 0,
-          L2L3: 0
+          L1L2: 0, L1L3: 0, L2L3: 0
         };
       }
 
@@ -117,11 +113,9 @@ router.get('/download', authenticate, async (req, res) => {
         const v = r[`voltage${p}`] ?? 0;
         const c = r[`current${p}`] ?? 0;
         const w = r[`power${p}`] ?? 0;
-
         dailyPeaks[date].voltage[p] = Math.max(dailyPeaks[date].voltage[p], v);
         dailyPeaks[date].current[p] = Math.max(dailyPeaks[date].current[p], c);
         dailyPeaks[date].power[p] = Math.max(dailyPeaks[date].power[p], w);
-
         allTime.voltage[p] = Math.max(allTime.voltage[p], v);
         allTime.current[p] = Math.max(allTime.current[p], c);
         allTime.power[p] = Math.max(allTime.power[p], w);
@@ -136,94 +130,107 @@ router.get('/download', authenticate, async (req, res) => {
     }
 
     const dates = Object.keys(dailyPeaks);
-    const doc = new pdf();
+    const doc = new PDFDocument({ margin: 30 });
     res.setHeader('Content-Disposition', 'attachment; filename=wattswatch_report.pdf');
     res.setHeader('Content-Type', 'application/pdf');
     doc.pipe(res);
 
     doc.fontSize(20).text('WattsWatch 30-Day Report', { align: 'center' }).moveDown();
 
+    // === Charts: 2 per page layout ===
     const chartDefs = [
       { field: 'voltage', label: 'Voltage', color: 'blue' },
       { field: 'current', label: 'Current', color: 'green' },
-      { field: 'power', label: 'Power', color: 'red' },
+      { field: 'power', label: 'Power', color: 'red' }
     ];
 
     for (const { field, label, color } of chartDefs) {
-      for (const p of phases) {
-        const values = dates.map(d => dailyPeaks[d][field][p]);
-        const chart = await generateLineChart({
-          labels: dates,
-          data: values,
-          label: `${label} ${p}`,
-          color
-        });
+      for (let i = 0; i < phases.length; i += 2) {
+        const charts = await Promise.all([0, 1].map(async (offset) => {
+          const p = phases[i + offset];
+          if (!p) return null;
+          const values = dates.map(d => dailyPeaks[d][field][p]);
+          return await generateLineChart({
+            labels: dates, data: values,
+            label: `${label} ${p}`, color
+          });
+        }));
+
         doc.addPage();
-        doc.fontSize(16).text(`${label} ${p}`, { align: 'center' });
-        doc.image(chart, { width: 500 }).moveDown();
+        charts.forEach((img, idx) => {
+          if (img) {
+            const x = 50 + idx * 270;
+            doc.image(img, x, 100, { width: 250 });
+            doc.fontSize(12).text(`${label} ${phases[i + idx]}`, x, 80, { align: 'center' });
+          }
+        });
       }
     }
 
-    // Line-to-Line Voltage charts
-    const l1l2Data = dates.map(d => dailyPeaks[d].L1L2);
-    const l1l3Data = dates.map(d => dailyPeaks[d].L1L3);
-    const l2l3Data = dates.map(d => dailyPeaks[d].L2L3);
+    // === Line-to-Line Charts ===
+    const lCharts = [
+      { label: 'Voltage L1–L2', field: 'L1L2', color: 'purple' },
+      { label: 'Voltage L1–L3', field: 'L1L3', color: 'orange' },
+      { label: 'Voltage L2–L3', field: 'L2L3', color: 'teal' },
+    ];
 
-    const l1l2Chart = await generateLineChart({
-      labels: dates,
-      data: l1l2Data,
-      label: 'Voltage L1–L2',
-      color: 'purple'
-    });
+    for (let i = 0; i < lCharts.length; i += 2) {
+      const imgs = await Promise.all([0, 1].map(async (offset) => {
+        const ch = lCharts[i + offset];
+        if (!ch) return null;
+        const data = dates.map(d => dailyPeaks[d][ch.field]);
+        return await generateLineChart({ labels: dates, data, label: ch.label, color: ch.color });
+      }));
 
-    const l1l3Chart = await generateLineChart({
-      labels: dates,
-      data: l1l3Data,
-      label: 'Voltage L1–L3',
-      color: 'orange'
-    });
-
-     const l2l3Chart = await generateLineChart({
-      labels: dates,
-      data: l2l3Data,
-      label: 'Voltage L2–L3',
-      color: 'teal'
-    });
-
-    doc.addPage();
-    doc.fontSize(16).text('Voltage L1–L2', { align: 'center' });
-    doc.image(l1l2Chart, { width: 500 });
-    doc.moveDown();
-
-    doc.addPage();
-    doc.fontSize(16).text('Voltage L1–L3', { align: 'center' });
-    doc.image(l1l3Chart, { width: 500 });
-    doc.moveDown();
-
-    doc.addPage();
-    doc.fontSize(16).text('Voltage L2–L3', { align: 'center' });
-    doc.image(l2l3Chart, { width: 500 });
-
-    // Daily peak table (P1–P3)
-    doc.addPage();
-    doc.fontSize(16).text('Daily Peaks Summary', { align: 'center' });
-    doc.moveDown();
-    dates.forEach(d => {
-      doc.fontSize(12).text(`${d}`);
-      for (const p of phases) {
-        doc.text(`  Phase ${p[1]} → V: ${dailyPeaks[d].voltage[p]} V | A: ${dailyPeaks[d].current[p]} A | W: ${dailyPeaks[d].power[p]} W`);
-      }
-      doc.text(`  L1–L2: ${dailyPeaks[d].L1L2} V | L1–L3: ${dailyPeaks[d].L1L3} V | L2–L3: ${dailyPeaks[d].L2L3} V`).moveDown();
-    });
-
-    doc.fontSize(14).text('All-Time Peaks:');
-    for (const p of phases) {
-      doc.text(`Phase ${p[1]} → V: ${allTime.voltage[p]} V | A: ${allTime.current[p]} A | W: ${allTime.power[p]} W`);
+      doc.addPage();
+      imgs.forEach((img, idx) => {
+        if (img) {
+          const x = 50 + idx * 270;
+          doc.image(img, x, 100, { width: 250 });
+          doc.fontSize(12).text(lCharts[i + idx].label, x, 80, { align: 'center' });
+        }
+      });
     }
-    doc.text(`L1–L2: ${allTime.L1L2} V`);
-    doc.text(`L1–L3: ${allTime.L1L3} V`);
-    doc.text(`L2–L3: ${allTime.L2L3} V`);
 
+    // === Daily Peak Table ===
+    doc.addPage();
+    doc.fontSize(16).text('📈 Daily Peaks Summary', { align: 'center' }).moveDown();
+
+    const dailyTable = {
+      headers: [
+        'Date', 'P1 (V/A/W)', 'P2 (V/A/W)', 'P3 (V/A/W)', 'L1-L2', 'L1-L3', 'L2-L3'
+      ],
+      rows: dates.map(d => [
+        d,
+        `${dailyPeaks[d].voltage.P1}/${dailyPeaks[d].current.P1}/${dailyPeaks[d].power.P1}`,
+        `${dailyPeaks[d].voltage.P2}/${dailyPeaks[d].current.P2}/${dailyPeaks[d].power.P2}`,
+        `${dailyPeaks[d].voltage.P3}/${dailyPeaks[d].current.P3}/${dailyPeaks[d].power.P3}`,
+        dailyPeaks[d].L1L2,
+        dailyPeaks[d].L1L3,
+        dailyPeaks[d].L2L3
+      ])
+    };
+
+    await doc.table(dailyTable, { width: 520 });
+
+    // === All-Time Peak Table ===
+    doc.addPage();
+    doc.fontSize(16).text('🏆 All-Time Peak Summary', { align: 'center' }).moveDown();
+
+    const allTimeTable = {
+      headers: ['Phase', 'Voltage (V)', 'Current (A)', 'Power (W)'],
+      rows: phases.map(p => [
+        p,
+        allTime.voltage[p],
+        allTime.current[p],
+        allTime.power[p]
+      ])
+    };
+
+    await doc.table(allTimeTable, { width: 400 });
+
+    doc.moveDown();
+    doc.text(`Line-to-Line: L1-L2: ${allTime.L1L2} V | L1-L3: ${allTime.L1L3} V | L2-L3: ${allTime.L2L3} V`);
 
     doc.end();
   } catch (err) {
