@@ -1,13 +1,43 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import Reading from '../models/Reading.js';
-import pdfkit from 'pdfkit';
+import pdf from 'pdfkit';
 import { generateLineChart } from '../utils/chartGenerator.js';
 import dayjs from 'dayjs';
 
+
 const router = express.Router();
 
-// Middleware to verify JWT and attach user ID
+// Route: Accept readings from ESP32
+router.post('/readings', async (req, res) => {
+  try {
+    const {
+      userId,
+      voltageP1, currentP1, powerP1,
+      voltageP2, currentP2, powerP2,
+      voltageP3, currentP3, powerP3,
+      voltageL1L2, voltageL1L3, voltageL2L3,
+      timestamp
+    } = req.body;
+
+    const reading = new Reading({
+      userId,
+      voltageP1, currentP1, powerP1,
+      voltageP2, currentP2, powerP2,
+      voltageP3, currentP3, powerP3,
+      voltageL1L2, voltageL1L3, voltageL2L3,
+      timestamp: timestamp ? new Date(timestamp) : new Date()
+    });
+
+    await reading.save();
+    res.status(201).json({ message: 'Reading saved successfully' });
+  } catch (err) {
+    console.error("❌ Error saving ESP32 reading:", err);
+    res.status(500).json({ message: 'Failed to save reading' });
+  }
+});
+
+// Middleware
 const authenticate = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'No token provided' });
@@ -21,15 +51,29 @@ const authenticate = (req, res, next) => {
   }
 };
 
-router.get('/readings/latest', authenticate, async (req, res) => {
+// Route: Get all readings
+router.get('/readings', authenticate, async (req, res) => {
   try {
-    const latest = await Reading.findOne({ userId: req.userId }).sort({ timestamp: -1 });
-    res.json(latest);
+    const readings = await Reading.find({ userId: req.userId }).sort({ timestamp: -1 });
+    res.json(readings);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch latest reading', error: err.message });
+    res.status(500).json({ message: 'Error fetching readings' });
   }
 });
 
+// Route: Get latest reading
+router.get('/readings/latest', authenticate, async (req, res) => {
+  try {
+    const latest = await Reading.findOne({ userId: req.userId }).sort({ timestamp: -1 });
+    console.log("📡 latest reading:", latest);
+    if (!latest) return res.status(404).json({ message: "No readings found." });
+    res.json(latest);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch reading", error: err.message });
+  }
+});
+
+// Route: Download PDF report
 router.get('/download', authenticate, async (req, res) => {
   try {
     const end = new Date();
@@ -51,7 +95,9 @@ router.get('/download', authenticate, async (req, res) => {
       voltage: { P1: 0, P2: 0, P3: 0 },
       current: { P1: 0, P2: 0, P3: 0 },
       power: { P1: 0, P2: 0, P3: 0 },
-      L1L2: 0, L1L3: 0, L2L3: 0
+      L1L2: 0,
+      L1L3: 0,
+      L2L3: 0
     };
 
     for (const r of readings) {
@@ -61,7 +107,9 @@ router.get('/download', authenticate, async (req, res) => {
           voltage: { P1: 0, P2: 0, P3: 0 },
           current: { P1: 0, P2: 0, P3: 0 },
           power: { P1: 0, P2: 0, P3: 0 },
-          L1L2: 0, L1L3: 0, L2L3: 0
+          L1L2: 0,
+          L1L3: 0,
+          L2L3: 0
         };
       }
 
@@ -87,12 +135,11 @@ router.get('/download', authenticate, async (req, res) => {
       allTime.L2L3 = Math.max(allTime.L2L3, r.voltageL2L3 ?? 0);
     }
 
-    const doc = new pdfkit({ margin: 50 });
+    const dates = Object.keys(dailyPeaks);
+    const doc = new pdf();
     res.setHeader('Content-Disposition', 'attachment; filename=wattswatch_report.pdf');
     res.setHeader('Content-Type', 'application/pdf');
     doc.pipe(res);
-
-    const dates = Object.keys(dailyPeaks);
 
     doc.fontSize(20).text('WattsWatch 30-Day Report', { align: 'center' }).moveDown();
 
@@ -103,85 +150,80 @@ router.get('/download', authenticate, async (req, res) => {
     ];
 
     for (const { field, label, color } of chartDefs) {
-      for (let i = 0; i < 3; i += 2) {
-        doc.addPage();
-        for (let j = 0; j < 2; j++) {
-          if (i + j < 3) {
-            const p = phases[i + j];
-            const values = dates.map(d => dailyPeaks[d][field][p]);
-            const chart = await generateLineChart({
-              labels: dates,
-              data: values,
-              label: `${label} ${p}`,
-              color
-            });
-            doc.fontSize(16).text(`${label} ${p}`, { align: 'center' });
-            doc.image(chart, { width: 450 });
-            doc.moveDown();
-          }
-        }
-      }
-      // Third graph alone on new page
-      const p = phases[2];
-      const values = dates.map(d => dailyPeaks[d][field][p]);
-      const chart = await generateLineChart({
-        labels: dates,
-        data: values,
-        label: `${label} ${p}`,
-        color
-      });
-      doc.addPage();
-      doc.fontSize(16).text(`${label} ${p}`, { align: 'center' });
-      doc.image(chart, { width: 450 });
-      doc.moveDown();
-    }
-
-    // Line-to-Line graphs
-    const lineVoltages = ['L1L2', 'L1L3', 'L2L3'];
-    const colors = ['purple', 'orange', 'teal'];
-
-    for (let i = 0; i < lineVoltages.length; i++) {
-      const label = `Voltage ${lineVoltages[i].replace('L', 'L–')}`;
-      const data = dates.map(d => dailyPeaks[d][lineVoltages[i]]);
-      const chart = await generateLineChart({
-        labels: dates,
-        data,
-        label,
-        color: colors[i]
-      });
-      doc.addPage();
-      doc.fontSize(16).text(label, { align: 'center' });
-      doc.image(chart, { width: 450 }).moveDown();
-    }
-
-    // Daily peaks table
-    doc.addPage();
-    doc.fontSize(16).text('📊 Daily Peak Summary', { align: 'center' }).moveDown(0.5);
-
-    doc.fontSize(10);
-    for (const d of dates) {
-      doc.text(`${d}`, { underline: true });
       for (const p of phases) {
-        doc.text(
-          `  Phase ${p[1]}: V = ${dailyPeaks[d].voltage[p]} V | A = ${dailyPeaks[d].current[p]} A | W = ${dailyPeaks[d].power[p]} W`
-        );
+        const values = dates.map(d => dailyPeaks[d][field][p]);
+        const chart = await generateLineChart({
+          labels: dates,
+          data: values,
+          label: `${label} ${p}`,
+          color
+        });
+        doc.addPage();
+        doc.fontSize(16).text(`${label} ${p}`, { align: 'center' });
+        doc.image(chart, { width: 500 }).moveDown();
       }
-      doc.text(
-        `  L1–L2: ${dailyPeaks[d].L1L2} V | L1–L3: ${dailyPeaks[d].L1L3} V | L2–L3: ${dailyPeaks[d].L2L3} V`
-      ).moveDown();
     }
 
-    // All-time peak summary table
+    // Line-to-Line Voltage charts
+    const l1l2Data = dates.map(d => dailyPeaks[d].L1L2);
+    const l1l3Data = dates.map(d => dailyPeaks[d].L1L3);
+    const l2l3Data = dates.map(d => dailyPeaks[d].L2L3);
+
+    const l1l2Chart = await generateLineChart({
+      labels: dates,
+      data: l1l2Data,
+      label: 'Voltage L1–L2',
+      color: 'purple'
+    });
+
+    const l1l3Chart = await generateLineChart({
+      labels: dates,
+      data: l1l3Data,
+      label: 'Voltage L1–L3',
+      color: 'orange'
+    });
+
+     const l2l3Chart = await generateLineChart({
+      labels: dates,
+      data: l2l3Data,
+      label: 'Voltage L2–L3',
+      color: 'teal'
+    });
+
     doc.addPage();
-    doc.fontSize(16).text('🏆 All-Time Peak Summary', { align: 'center' }).moveDown(0.5);
+    doc.fontSize(16).text('Voltage L1–L2', { align: 'center' });
+    doc.image(l1l2Chart, { width: 500 });
+    doc.moveDown();
+
+    doc.addPage();
+    doc.fontSize(16).text('Voltage L1–L3', { align: 'center' });
+    doc.image(l1l3Chart, { width: 500 });
+    doc.moveDown();
+
+    doc.addPage();
+    doc.fontSize(16).text('Voltage L2–L3', { align: 'center' });
+    doc.image(l2l3Chart, { width: 500 });
+
+    // Daily peak table (P1–P3)
+    doc.addPage();
+    doc.fontSize(16).text('Daily Peaks Summary', { align: 'center' });
+    doc.moveDown();
+    dates.forEach(d => {
+      doc.fontSize(12).text(`${d}`);
+      for (const p of phases) {
+        doc.text(`  Phase ${p[1]} → V: ${dailyPeaks[d].voltage[p]} V | A: ${dailyPeaks[d].current[p]} A | W: ${dailyPeaks[d].power[p]} W`);
+      }
+      doc.text(`  L1–L2: ${dailyPeaks[d].L1L2} V | L1–L3: ${dailyPeaks[d].L1L3} V | L2–L3: ${dailyPeaks[d].L2L3} V`).moveDown();
+    });
+
+    doc.fontSize(14).text('All-Time Peaks:');
     for (const p of phases) {
-      doc.text(
-        `Phase ${p[1]}: V = ${allTime.voltage[p]} V | A = ${allTime.current[p]} A | W = ${allTime.power[p]} W`
-      );
+      doc.text(`Phase ${p[1]} → V: ${allTime.voltage[p]} V | A: ${allTime.current[p]} A | W: ${allTime.power[p]} W`);
     }
     doc.text(`L1–L2: ${allTime.L1L2} V`);
     doc.text(`L1–L3: ${allTime.L1L3} V`);
     doc.text(`L2–L3: ${allTime.L2L3} V`);
+
 
     doc.end();
   } catch (err) {
