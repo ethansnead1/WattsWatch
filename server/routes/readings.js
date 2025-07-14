@@ -5,7 +5,37 @@ import pdf from 'pdfkit';
 import { generateLineChart } from '../utils/chartGenerator.js';
 import dayjs from 'dayjs';
 
+
 const router = express.Router();
+
+// Route: Accept readings from ESP32
+router.post('/readings', async (req, res) => {
+  try {
+    const {
+      userId,
+      voltageP1, currentP1, powerP1,
+      voltageP2, currentP2, powerP2,
+      voltageP3, currentP3, powerP3,
+      voltageL1L2, voltageL1L3, voltageL2L3,
+      timestamp
+    } = req.body;
+
+    const reading = new Reading({
+      userId,
+      voltageP1, currentP1, powerP1,
+      voltageP2, currentP2, powerP2,
+      voltageP3, currentP3, powerP3,
+      voltageL1L2, voltageL1L3, voltageL2L3,
+      timestamp: timestamp ? new Date(timestamp) : new Date()
+    });
+
+    await reading.save();
+    res.status(201).json({ message: 'Reading saved successfully' });
+  } catch (err) {
+    console.error("❌ Error saving ESP32 reading:", err);
+    res.status(500).json({ message: 'Failed to save reading' });
+  }
+});
 
 // Middleware
 const authenticate = (req, res, next) => {
