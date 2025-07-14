@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit';
-import { Table } from 'pdfkit-table';
+import pkg from 'pdfkit-table';
+const { Table } = pkg; 
 import pdfTable from 'pdfkit-table';
 import fs from 'fs';
 import { generateLineChart } from '../utils/chartGenerator.js';
