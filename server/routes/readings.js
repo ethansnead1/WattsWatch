@@ -1,9 +1,12 @@
+import PDFDocument from 'pdfkit';
+import { Table } from 'pdfkit-table';
+import pdfTable from 'pdfkit-table';
+import fs from 'fs';
+import { generateLineChart } from '../utils/chartGenerator.js';
+import Reading from '../models/Reading.js';
+import dayjs from 'dayjs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import Reading from '../models/Reading.js';
-import pdf from 'pdfkit';
-import { generateLineChart } from '../utils/chartGenerator.js';
-import dayjs from 'dayjs';
 
 
 const router = express.Router();
