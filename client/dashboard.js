@@ -16,8 +16,7 @@ let peakPowers = {};
 
 const updateDashboard = async () => {
   try {
-    const response = await fetch("https://wattswatch.onrender.com/api/readings/latest", {
-
+    const response = await fetch("https://wattswwatch.onrender.com/api/readings/latest", {
       headers: {
         Authorization: `Bearer ${token}`,
         "Cache-Control": "no-cache",
@@ -79,7 +78,7 @@ document.getElementById("phaseToggleBtn")?.addEventListener("click", () => {
 
 // === Live Refresh ===
 updateDashboard();
-setInterval(updateDashboard, 15000);
+setInterval(updateDashboard, 5000);
 
 // === Logout Button ===
 document.getElementById("logoutBtn")?.addEventListener("click", () => {
