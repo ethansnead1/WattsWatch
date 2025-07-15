@@ -16,7 +16,7 @@ let peakPowers = {};
 
 const updateDashboard = async () => {
   try {
-    const response = await fetch("https://wattswwatch.onrender.com/api/readings/latest", {
+    const response = await fetch("https://wattswatch.onrender.com/api/readings/latest", {
       headers: {
         Authorization: `Bearer ${token}`,
         "Cache-Control": "no-cache",
