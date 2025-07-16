@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const readingSchema = new mongoose.Schema({
+const savedReadingSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   voltageP1: Number,
   currentP1: Number,
