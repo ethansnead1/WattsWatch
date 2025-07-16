@@ -19,5 +19,4 @@ const readingSchema = new mongoose.Schema({
 
 
 
-const SavedReading = mongoose.model('SavedReading', savedReadingSchema);
-export default SavedReading;
+export default mongoose.model('SavedReading', savedReadingSchema);
