@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import Reading from '../models/Reading.js';
+import SavedReading from '../models/SavedReading.js';
 import pdf from 'pdfkit';
 import { generateLineChart } from '../utils/chartGenerator.js';
 import dayjs from 'dayjs';
@@ -50,6 +51,35 @@ const authenticate = (req, res, next) => {
     res.status(403).json({ message: 'Invalid token' });
   }
 };
+
+// Route: Accept 15-min peak readings from ESP32
+router.post('/savedReadings', async (req, res) => {
+  try {
+    const {
+      userId,
+      voltageP1, currentP1, powerP1,
+      voltageP2, currentP2, powerP2,
+      voltageP3, currentP3, powerP3,
+      voltageL1L2, voltageL1L3, voltageL2L3,
+      timestamp
+    } = req.body;
+
+    const reading = new Reading({
+      userId,
+      voltageP1, currentP1, powerP1,
+      voltageP2, currentP2, powerP2,
+      voltageP3, currentP3, powerP3,
+      voltageL1L2, voltageL1L3, voltageL2L3,
+      timestamp: timestamp ? new Date(timestamp) : new Date()
+    });
+
+    await reading.save();
+    res.status(201).json({ message: '15-Min Peak Reading saved successfully' });
+  } catch (err) {
+    console.error("❌ Error saving ESP32 reading:", err);
+    res.status(500).json({ message: 'Failed to save reading' });
+  }
+});
 
 // Route: Get all readings
 router.get('/readings', authenticate, async (req, res) => {
