@@ -64,7 +64,7 @@ router.post('/savedReadings', async (req, res) => {
       timestamp
     } = req.body;
 
-    const reading = new Reading({
+    const reading = new SavedReading({
       userId,
       voltageP1, currentP1, powerP1,
       voltageP2, currentP2, powerP2,
