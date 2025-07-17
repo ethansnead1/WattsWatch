@@ -91,6 +91,16 @@ router.get('/readings', authenticate, async (req, res) => {
   }
 });
 
+// Route: Get all readings
+router.get('/savedReadings', authenticate, async (req, res) => {
+  try {
+    const readings = await SavedReading.find({ userId: req.userId }).sort({ timestamp: -1 });
+    res.json(readings);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching readings' });
+  }
+});
+
 // Route: Get latest reading
 router.get('/readings/latest', authenticate, async (req, res) => {
   try {
