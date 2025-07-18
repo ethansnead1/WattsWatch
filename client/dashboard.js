@@ -63,7 +63,7 @@ const updateDashboard = async () => {
 document.getElementById("phaseToggleBtn")?.addEventListener("click", () => {
   if (mode === "1-phase") {
     mode = "3-phase";
-    document.getElementById("phase3Row").style.display = "flex";
+    document.getElementById("phase3Row").style.display = "block";
     document.getElementById("voltageL1L3Wrapper").style.display = "flex";
     document.getElementById("voltageL2L3Wrapper").style.display = "flex";
     document.getElementById("phaseToggleBtn").textContent = "Switch to 1-Phase";
