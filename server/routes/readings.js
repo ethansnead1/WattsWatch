@@ -175,7 +175,7 @@ router.get('/download', authenticate, async (req, res) => {
       for (const p of phases) {
         const values = dates.map(d => dailyPeaks[d][field][p]);
         const chart = await generateLineChart({ labels: dates, data: values, label: `${label} ${p}`, color });
-        doc.image(chart, { width: 500 }).moveDown();
+        doc.image(chart, { width: 400 }).moveDown();
       }
       doc.addPage();
     }
@@ -190,7 +190,7 @@ router.get('/download', authenticate, async (req, res) => {
     for (const { key, label, color } of linePairs) {
       const data = dates.map(d => dailyPeaks[d][key]);
       const chart = await generateLineChart({ labels: dates, data, label, color });
-      doc.image(chart, { width: 500 }).moveDown();
+      doc.image(chart, { width: 400 }).moveDown();
     }
     doc.addPage();
 
