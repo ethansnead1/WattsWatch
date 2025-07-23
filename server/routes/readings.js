@@ -120,16 +120,16 @@ router.get('/download', authenticate, async (req, res) => {
     const start = new Date();
     start.setDate(end.getDate() - 29);
 
-   
+    const readings = await Reading.find({ userId: req.userId, timestamp: { $gte: start, $lte: end } }).sort({ timestamp: 1 });
     const savedReadings = await SavedReading.find({ userId: req.userId, timestamp: { $gte: start, $lte: end } }).sort({ timestamp: 1 });
 
-    if (savedReadings.length === 0) return res.status(404).json({ message: 'No readings found in last 30 days' });
+    if (readings.length === 0) return res.status(404).json({ message: 'No readings found in last 30 days' });
 
     const phases = ['P1', 'P2', 'P3'];
     const dailyPeaks = {};
     const allTime = { voltage: { P1: 0, P2: 0, P3: 0 }, current: { P1: 0, P2: 0, P3: 0 }, power: { P1: 0, P2: 0, P3: 0 }, L1L2: 0, L1L3: 0, L2L3: 0 };
 
-    for (const r of savedReadings) {
+    for (const r of readings) {
       const date = dayjs(r.timestamp).format('YYYY-MM-DD');
       if (!dailyPeaks[date]) dailyPeaks[date] = { voltage: { P1: 0, P2: 0, P3: 0 }, current: { P1: 0, P2: 0, P3: 0 }, power: { P1: 0, P2: 0, P3: 0 }, L1L2: 0, L1L3: 0, L2L3: 0 };
       for (const p of phases) {
@@ -164,7 +164,7 @@ router.get('/download', authenticate, async (req, res) => {
     doc.moveDown();
     doc.text(`Line Voltages → L1–L2: ${allTime.L1L2} V | L1–L3: ${allTime.L1L3} V | L2–L3: ${allTime.L2L3} V`);
     // Calculate All-Time Peaks (Ever)
-const allReadings = await SavedReading.find({ userId: req.userId });
+const allReadings = await Reading.find({ userId: req.userId });
 
 const allTimeEver = {
   voltage: { P1: 0, P2: 0, P3: 0 },
