@@ -127,7 +127,14 @@ router.get('/download', authenticate, async (req, res) => {
 
     const phases = ['P1', 'P2', 'P3'];
     const dailyPeaks = {};
-    const allTime = { voltage: { P1: 0, P2: 0, P3: 0 }, current: { P1: 0, P2: 0, P3: 0 }, power: { P1: 0, P2: 0, P3: 0 }, L1L2: 0, L1L3: 0, L2L3: 0 };
+    const allTime = {
+  power: {
+    P1: { value: 0, date: null },
+    P2: { value: 0, date: null },
+    P3: { value: 0, date: null }
+  }
+};
+
 
     for (const r of readings) {
       const date = dayjs(r.timestamp).format('YYYY-MM-DD');
