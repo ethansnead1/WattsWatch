@@ -146,8 +146,6 @@ router.get('/download', authenticate, async (req, res) => {
         dailyPeaks[date].voltage[p] = Math.max(dailyPeaks[date].voltage[p], v);
         dailyPeaks[date].current[p] = Math.max(dailyPeaks[date].current[p], c);
         dailyPeaks[date].power[p] = Math.max(dailyPeaks[date].power[p], w);
-        allTime.voltage[p] = Math.max(allTime.voltage[p], v);
-        allTime.current[p] = Math.max(allTime.current[p], c);
         if (w > allTime.power[p].value) {
   allTime.power[p] = { value: w, date: r.timestamp };
 }
@@ -156,9 +154,6 @@ router.get('/download', authenticate, async (req, res) => {
       dailyPeaks[date].L1L2 = Math.max(dailyPeaks[date].L1L2, r.voltageL1L2 ?? 0);
       dailyPeaks[date].L1L3 = Math.max(dailyPeaks[date].L1L3, r.voltageL1L3 ?? 0);
       dailyPeaks[date].L2L3 = Math.max(dailyPeaks[date].L2L3, r.voltageL2L3 ?? 0);
-      allTime.L1L2 = Math.max(allTime.L1L2, r.voltageL1L2 ?? 0);
-      allTime.L1L3 = Math.max(allTime.L1L3, r.voltageL1L3 ?? 0);
-      allTime.L2L3 = Math.max(allTime.L2L3, r.voltageL2L3 ?? 0);
     }
 
     const dates = Object.keys(dailyPeaks);
