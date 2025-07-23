@@ -164,39 +164,36 @@ router.get('/download', authenticate, async (req, res) => {
     doc.moveDown();
     doc.text(`Line Voltages → L1–L2: ${allTime.L1L2} V | L1–L3: ${allTime.L1L3} V | L2–L3: ${allTime.L2L3} V`);
     // Calculate All-Time Peaks (Ever)
+
+// Calculate All-Time Power Peaks (Ever)
 const allReadings = await Reading.find({ userId: req.userId });
 
-const allTimeEver = {
-  voltage: { P1: 0, P2: 0, P3: 0 },
-  current: { P1: 0, P2: 0, P3: 0 },
-  power: { P1: 0, P2: 0, P3: 0 },
-  L1L2: 0,
-  L1L3: 0,
-  L2L3: 0
+const allTimePowerPeaks = {
+  P1: { value: 0, date: null },
+  P2: { value: 0, date: null },
+  P3: { value: 0, date: null }
 };
 
 for (const r of allReadings) {
   for (const p of phases) {
-    allTimeEver.voltage[p] = Math.max(allTimeEver.voltage[p], r[`voltage${p}`] ?? 0);
-    allTimeEver.current[p] = Math.max(allTimeEver.current[p], r[`current${p}`] ?? 0);
-    allTimeEver.power[p]   = Math.max(allTimeEver.power[p], r[`power${p}`] ?? 0);
+    const w = r[`power${p}`] ?? 0;
+    if (w > allTimePowerPeaks[p].value) {
+      allTimePowerPeaks[p] = { value: w, date: r.timestamp };
+    }
   }
-  allTimeEver.L1L2 = Math.max(allTimeEver.L1L2, r.voltageL1L2 ?? 0);
-  allTimeEver.L1L3 = Math.max(allTimeEver.L1L3, r.voltageL1L3 ?? 0);
-  allTimeEver.L2L3 = Math.max(allTimeEver.L2L3, r.voltageL2L3 ?? 0);
 }
 
 // Add to PDF below 30-day peaks
 doc.moveDown();
-doc.fontSize(16).text('All-Time Peak Values (Ever)', { align: 'center' }).moveDown();
+doc.fontSize(16).text('All-Time Peak Wattage Only (Ever)', { align: 'center' }).moveDown();
 
 for (const p of phases) {
-  doc.fontSize(12).text(
-    `Phase ${p[1]} → Max V: ${allTimeEver.voltage[p]} V | Max A: ${allTimeEver.current[p]} A | Max W: ${allTimeEver.power[p]} W`
-  );
+  const { value, date } = allTimePowerPeaks[p];
+  const formatted = date ? dayjs(date).format('MMMM D, YYYY') : 'N/A';
+  doc.fontSize(12).text(`Phase ${p[1]} → Max Wattage: ${value} W on ${formatted}`);
 }
-doc.moveDown();
-doc.text(`Line Voltages → L1–L2: ${allTimeEver.L1L2} V | L1–L3: ${allTimeEver.L1L3} V | L2–L3: ${allTimeEver.L2L3} V`);
+
+
 
     doc.addPage();
 
