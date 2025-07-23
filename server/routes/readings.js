@@ -141,7 +141,10 @@ router.get('/download', authenticate, async (req, res) => {
         dailyPeaks[date].power[p] = Math.max(dailyPeaks[date].power[p], w);
         allTime.voltage[p] = Math.max(allTime.voltage[p], v);
         allTime.current[p] = Math.max(allTime.current[p], c);
-        allTime.power[p] = Math.max(allTime.power[p], w);
+        if (w > allTime.power[p].value) {
+  allTime.power[p] = { value: w, date: r.timestamp };
+}
+
       }
       dailyPeaks[date].L1L2 = Math.max(dailyPeaks[date].L1L2, r.voltageL1L2 ?? 0);
       dailyPeaks[date].L1L3 = Math.max(dailyPeaks[date].L1L3, r.voltageL1L3 ?? 0);
@@ -159,11 +162,14 @@ router.get('/download', authenticate, async (req, res) => {
 
     doc.fontSize(20).text('WattsWatch NEC 30-Day Report', { align: 'center' });
     doc.fontSize(12).text(`Generated on: ${dayjs().format('MMMM D, YYYY')}`, { align: 'center' }).moveDown();
-    doc.fontSize(16).text('All-Time Peak Values (Last 30 Days)', { align: 'center' }).moveDown();
-    for (const p of phases) doc.fontSize(12).text(`Phase ${p[1]} → Max V: ${allTime.voltage[p]} V | Max A: ${allTime.current[p]} A | Max W: ${allTime.power[p]} W`);
-    doc.moveDown();
-    doc.text(`Line Voltages → L1–L2: ${allTime.L1L2} V | L1–L3: ${allTime.L1L3} V | L2–L3: ${allTime.L2L3} V`);
-    // Calculate All-Time Peaks (Ever)
+    doc.fontSize(16).text('30-Day Peak Wattage', { align: 'center' }).moveDown();
+
+for (const p of phases) {
+  const { value, date } = allTime.power[p];
+  const formatted = date ? dayjs(date).format('MMMM D, YYYY') : 'N/A';
+  doc.fontSize(12).text(`Phase ${p[1]} → Max Wattage: ${value} W on ${formatted}`);
+}
+
 
 // Calculate All-Time Power Peaks (Ever)
 const allReadings = await Reading.find({ userId: req.userId });
@@ -185,7 +191,7 @@ for (const r of allReadings) {
 
 // Add to PDF below 30-day peaks
 doc.moveDown();
-doc.fontSize(16).text('All-Time Peak Wattage Only (Ever)', { align: 'center' }).moveDown();
+doc.fontSize(16).text('All-Time Peak Wattage (Ever)', { align: 'center' }).moveDown();
 
 for (const p of phases) {
   const { value, date } = allTimePowerPeaks[p];
